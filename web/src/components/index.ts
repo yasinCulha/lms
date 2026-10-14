@@ -22,3 +22,4 @@ export { Dialog } from './Dialog';
 export type { DialogSize } from './Dialog';
 export { formStyles } from './Form';
 export { ConfirmDialog } from './ConfirmDialog';
+export { PasswordInput } from './PasswordInput';

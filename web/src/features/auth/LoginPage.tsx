@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../data/useAuth';
-import { Button, Text } from '../../components';
+import { Button, PasswordInput, Text } from '../../components';
 import styles from './LoginPage.module.css';
 
 export function LoginPage() {
@@ -33,10 +33,11 @@ export function LoginPage() {
         onChange={(e) => setEmail(e.target.value)}
         required
       />
-      <input
+      <PasswordInput
         className={styles.input}
-        type="password"
         placeholder="Şifre"
+        aria-label="Şifre"
+        autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
