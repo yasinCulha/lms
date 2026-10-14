@@ -4,3 +4,9 @@ dist/
 lms.txt
 *.local
 .DS_Store
+dev.db
+dev.db-shm
+dev.db-wal
+package-lock.json
+*.tsbuildinfo
+migration_lock.toml
