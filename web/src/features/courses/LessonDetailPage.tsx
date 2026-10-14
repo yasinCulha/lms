@@ -1,12 +1,17 @@
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Icon, Panel, ProgressBar, Text } from '../../components';
 import { PageContainer } from '../../layout/PageContainer';
+import { useCurrentUser } from '../../data/useCurrentUser';
 import { useCourseDetail } from './useCourseDetail';
 import { useLessonAutoComplete } from './useLessonAutoComplete';
 import { useStudyTracker } from './useStudyTracker';
 import { useMyLessonGrade } from './useMyLessonGrade';
 import { LessonFeedback } from './LessonFeedback';
 import { CONTENT_TYPE_ICONS } from './contentType';
+import { YouTubeVideo } from './YouTubeVideo';
+import { NextLessonCountdown } from './NextLessonCountdown';
 import type { CourseLessonSummary, CourseModuleSummary } from '../../types';
 import styles from './LessonDetailPage.module.css';
 
@@ -35,6 +40,17 @@ export function LessonDetailPage() {
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
   const navigate = useNavigate();
   const { course, loading, error, enrolling, enroll, setLessonCompleted, progressError } = useCourseDetail(courseId);
+  const { user, loading: userLoading } = useCurrentUser();
+  // Videosu biten dersin kimliği; başka derse geçilince geri sayım kendiliğinden kaybolur.
+  const [countdownLessonId, setCountdownLessonId] = useState<string | null>(null);
+
+  // Sunucudaki canManageCourse ile aynı: aktif rol ADMIN ya da bu kursa atanmış INSTRUCTOR.
+  const canManage = Boolean(
+    user &&
+      course &&
+      (user.role === 'ADMIN' ||
+        (user.role === 'INSTRUCTOR' && course.instructors?.some((instructor) => instructor.id === user.id))),
+  );
 
   const lessonExists = Boolean(
     lessonId && course?.modules.some((module) => module.lessons.some((lesson) => lesson.id === lessonId)),
@@ -45,7 +61,7 @@ export function LessonDetailPage() {
   );
   useStudyTracker(lessonId, Boolean(course?.isEnrolled) && lessonExists);
 
-  if (loading) {
+  if (loading || (userLoading && course && !course.isEnrolled)) {
     return (
       <PageContainer>
         <Text role="body-md">Yükleniyor…</Text>
@@ -68,7 +84,7 @@ export function LessonDetailPage() {
     );
   }
 
-  if (!course.isEnrolled) {
+  if (!course.isEnrolled && !canManage) {
     return (
       <PageContainer>
         <div className={styles.header}>
@@ -166,9 +182,22 @@ export function LessonDetailPage() {
             </Text>
           )}
 
-          <LessonContent lesson={active.lesson} />
+          <LessonContent
+            lesson={active.lesson}
+            onVideoEnded={next ? () => setCountdownLessonId(active.lesson.id) : undefined}
+            onVideoPlaying={() => setCountdownLessonId(null)}
+            overlay={
+              next && countdownLessonId === active.lesson.id ? (
+                <NextLessonCountdown
+                  nextTitle={next.lesson.title}
+                  onElapsed={() => goTo(next)}
+                  onCancel={() => setCountdownLessonId(null)}
+                />
+              ) : null
+            }
+          />
 
-          <LessonFeedback lessonId={active.lesson.id} />
+          <LessonFeedback lessonId={active.lesson.id} canManage={canManage} />
 
           {progressError && (
             <Text role="body-sm" tone="error" as="p" className={styles.completion}>
@@ -282,7 +311,14 @@ function QuizGrade({ lessonId }: { lessonId: string }) {
   );
 }
 
-function LessonContent({ lesson }: { lesson: CourseLessonSummary }) {
+interface LessonContentProps {
+  lesson: CourseLessonSummary;
+  onVideoEnded?: () => void;
+  onVideoPlaying?: () => void;
+  overlay?: ReactNode;
+}
+
+function LessonContent({ lesson, onVideoEnded, onVideoPlaying, overlay }: LessonContentProps) {
   switch (lesson.contentType) {
     case 'VIDEO_YOUTUBE': {
       const videoId = lesson.contentUrl ? extractYouTubeId(lesson.contentUrl) : null;
@@ -296,15 +332,13 @@ function LessonContent({ lesson }: { lesson: CourseLessonSummary }) {
         );
       }
       return (
-        <div className={styles.videoWrapper}>
-          <iframe
-            className={styles.video}
-            src={`https://www.youtube.com/embed/${videoId}`}
-            title={lesson.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
+        <YouTubeVideo
+          videoId={videoId}
+          title={lesson.title}
+          onEnded={onVideoEnded}
+          onPlaying={onVideoPlaying}
+          overlay={overlay}
+        />
       );
     }
     case 'DOCUMENT':

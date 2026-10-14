@@ -36,6 +36,10 @@ model User {
   quizGradesReceived QuizGrade[] @relation("QuizGradesReceived")
   quizGradesGiven    QuizGrade[] @relation("QuizGradesGiven")
   lessonFeedback LessonFeedback[]
+  lessonComments       LessonComment[] @relation("LessonCommentsAuthored")
+  lessonCommentReplies LessonComment[] @relation("LessonCommentReplies")
+  lessonSurveys        LessonSurvey[]
+  lessonSurveyReads    LessonSurveyRead[]
   calendarEventsCreated CalendarEvent[] @relation("CalendarEventsCreated")
   announcementsAuthored Announcement[] @relation("AnnouncementsAuthored")
   questionBanksCreated QuestionBank[] @relation("QuestionBanksCreated")
@@ -86,6 +90,62 @@ model Lesson {
   lessonProgress LessonProgress[]
   quizGrades  QuizGrade[]
   lessonFeedback LessonFeedback[]
+  comments    LessonComment[]
+  surveys     LessonSurvey[]
+}
+
+/// Ders tamamlandıktan sonra öğrenciye bir kez sorulan, yalnızca eğitmene görünen anket.
+/// Öğrenci atlarsa skipped=true satırı tutulur (tekrar sorulmaz), cevap alanları boş kalır.
+model LessonSurvey {
+  id         String   @id @default(cuid())
+  lessonId   String
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skipped    Boolean  @default(false)
+  /// 1–5: anlaşılırlık (1 hiç anlaşılır değil, 5 çok anlaşılır)
+  clarity    Int?
+  /// 1–5: zorluk (1 çok kolay, 5 çok zor)
+  difficulty Int?
+  /// Allowed literals: "SLOW" | "JUST_RIGHT" | "FAST"
+  pace       String?
+  note       String?
+  createdAt  DateTime @default(now())
+  reads      LessonSurveyRead[]
+
+  @@unique([userId, lessonId])
+  @@index([lessonId, createdAt])
+}
+
+/// Eğitmenin bir anketi okuduğu kaydı (eğitmen başına ayrı okundu durumu).
+model LessonSurveyRead {
+  id       String       @id @default(cuid())
+  surveyId String
+  survey   LessonSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt   DateTime     @default(now())
+
+  @@unique([surveyId, userId])
+  @@index([userId])
+}
+
+/// Derse öğrenci yorumu. Öğrenci başına ders başına en fazla 5 (API zorlar). Eğitmen yanıtı tek ve aynı satırda.
+model LessonComment {
+  id            String    @id @default(cuid())
+  lessonId      String
+  lesson        Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation("LessonCommentsAuthored", fields: [userId], references: [id], onDelete: Cascade)
+  body          String
+  replyBody     String?
+  replyAuthorId String?
+  replyAuthor   User?     @relation("LessonCommentReplies", fields: [replyAuthorId], references: [id], onDelete: SetNull)
+  repliedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([lessonId, createdAt])
+  @@index([userId, lessonId])
 }
 
 /// Ders başına kullanıcı geri bildirimi: beğeni ve/veya 1–5 puan. İkisi de boşsa satır tutulmaz.

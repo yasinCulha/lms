@@ -8,7 +8,7 @@ import { canManageCourse } from '../lib/courseAccess.js';
 import { mergeFeedback, parseFeedbackBody, summarizeGroups } from '../lib/feedback.js';
 
 async function buildFeedback(userId: string, lessonId: string) {
-  const [groups, mine] = await Promise.all([
+  const [groups, mine, commentCount] = await Promise.all([
     prisma.lessonFeedback.groupBy({
       by: ['liked'],
       where: { lessonId },
@@ -19,6 +19,7 @@ async function buildFeedback(userId: string, lessonId: string) {
       where: { userId_lessonId: { userId, lessonId } },
       select: { liked: true, rating: true },
     }),
+    prisma.lessonComment.count({ where: { lessonId } }),
   ]);
   const summary = summarizeGroups(
     groups.map((g) => ({
@@ -28,7 +29,7 @@ async function buildFeedback(userId: string, lessonId: string) {
       ratingSum: g._sum.rating,
     })),
   );
-  return { feedback: { ...summary, mine: mine ?? { liked: false, rating: null } } };
+  return { feedback: { ...summary, commentCount, mine: mine ?? { liked: false, rating: null } } };
 }
 
 export function registerFeedbackRoutes(app: FastifyInstance) {

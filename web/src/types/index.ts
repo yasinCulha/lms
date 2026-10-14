@@ -241,7 +241,76 @@ export interface LessonFeedback {
   likeCount: number;
   ratingCount: number;
   ratingAverage: number | null;
+  commentCount: number;
   mine: MyLessonFeedback;
+}
+
+export interface LessonCommentReply {
+  body: string;
+  repliedAt: string;
+  /** Yanıtı yazan eğitmen hesabı silinmişse null. */
+  author: { name: string } | null;
+}
+
+/** Ders yorumu. Yazar adı sunucuda maskelenir ("Y**** Ç****"). */
+export interface LessonComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { displayName: string };
+  /** Yazarın bu derse verdiği puan; puan vermediyse null. */
+  rating: number | null;
+  isMine: boolean;
+  reply: LessonCommentReply | null;
+}
+
+export type SurveyPace = 'SLOW' | 'JUST_RIGHT' | 'FAST';
+
+/** GET /api/v1/lessons/:id/survey — öğrencinin bu dersteki anket durumu. */
+export interface LessonSurveyStateResponse {
+  survey: { status: 'PENDING' | 'ANSWERED' | 'SKIPPED'; lessonCompleted: boolean };
+  lesson: { id: string; title: string };
+}
+
+export interface LessonSurveyAnswer {
+  clarity: number;
+  difficulty: number;
+  pace: SurveyPace;
+  note?: string;
+}
+
+/** Eğitmene görünen anket yanıtı. Öğrenci adı sunucuda maskelenir. */
+export interface InstructorSurvey {
+  id: string;
+  createdAt: string;
+  author: { displayName: string };
+  course: { id: string; title: string };
+  lesson: { id: string; title: string };
+  clarity: number;
+  difficulty: number;
+  pace: SurveyPace;
+  note: string | null;
+  read: boolean;
+}
+
+export interface SurveySummary {
+  count: number;
+  clarityAverage: number | null;
+  difficultyAverage: number | null;
+  pace: Record<SurveyPace, number>;
+}
+
+export interface SurveysResponse {
+  surveys: InstructorSurvey[];
+  unreadCount: number;
+  summary?: SurveySummary;
+}
+
+export interface LessonCommentsResponse {
+  comments: LessonComment[];
+  myCommentCount: number;
+  maxComments: number;
+  canComment: boolean;
 }
 
 /** Takvim etkinliği türü; renk ve simge bu türe göre seçilir. */

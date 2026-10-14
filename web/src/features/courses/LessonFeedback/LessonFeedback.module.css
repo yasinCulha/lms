@@ -56,6 +56,32 @@
   color: var(--color-state-warning);
 }
 
+.separator {
+  color: var(--color-outline-variant);
+}
+
+.commentsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.commentsToggle:hover,
+.commentsToggleOpen {
+  background: rgb(var(--rgb-secondary) / 0.08);
+}
+
+.commentsToggle:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .likeButton:disabled,
 .star:disabled {
   cursor: not-allowed;

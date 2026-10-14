@@ -151,7 +151,7 @@ describe('feedback routes', () => {
     const res = await get(tokens.s1);
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
-      feedback: { likeCount: 0, ratingCount: 0, ratingAverage: null, mine: { liked: false, rating: null } },
+      feedback: { likeCount: 0, ratingCount: 0, ratingAverage: null, commentCount: 0, mine: { liked: false, rating: null } },
     });
   });
 
@@ -159,12 +159,12 @@ describe('feedback routes', () => {
     let res = await put({ liked: true });
     expect(res.statusCode).toBe(200);
     expect(res.json().feedback).toEqual({
-      likeCount: 1, ratingCount: 0, ratingAverage: null, mine: { liked: true, rating: null },
+      likeCount: 1, ratingCount: 0, ratingAverage: null, commentCount: 0, mine: { liked: true, rating: null },
     });
 
     res = await put({ rating: 4 }, tokens.s2);
     expect(res.json().feedback).toEqual({
-      likeCount: 1, ratingCount: 1, ratingAverage: 4, mine: { liked: false, rating: 4 },
+      likeCount: 1, ratingCount: 1, ratingAverage: 4, commentCount: 0, mine: { liked: false, rating: 4 },
     });
 
     res = await put({ liked: true, rating: 5 }, tokens.s3);
@@ -216,7 +216,7 @@ describe('feedback routes', () => {
     await put({ rating: 4 }, tokens.s3);
 
     const s1 = (await get(tokens.s1)).json().feedback;
-    expect(s1).toEqual({ likeCount: 2, ratingCount: 3, ratingAverage: 4.3, mine: { liked: true, rating: 5 } });
+    expect(s1).toEqual({ likeCount: 2, ratingCount: 3, ratingAverage: 4.3, commentCount: 0, mine: { liked: true, rating: 5 } });
     const s3 = (await get(tokens.s3)).json().feedback;
     expect(s3.mine).toEqual({ liked: false, rating: 4 });
     expect(s3.likeCount).toBe(2);

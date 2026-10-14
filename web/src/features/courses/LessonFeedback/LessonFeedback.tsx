@@ -1,18 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Card, Icon, Text } from '../../../components';
 import { useLessonFeedback } from '../useLessonFeedback';
+import { LessonComments } from '../LessonComments';
 import styles from './LessonFeedback.module.css';
 
 interface LessonFeedbackProps {
   lessonId: string;
+  /** Kursu yöneten (eğitmen/yönetici) beğeni ve puan veremez, yorumlara yanıt verebilir. */
+  canManage?: boolean;
 }
 
 const STARS = [1, 2, 3, 4, 5];
 
-export function LessonFeedback({ lessonId }: LessonFeedbackProps) {
-  const { feedback, loading, error, saving, setLiked, setRating } = useLessonFeedback(lessonId, true);
+export function LessonFeedback({ lessonId, canManage = false }: LessonFeedbackProps) {
+  const { feedback, loading, error, saving: savingFeedback, setLiked, setRating } = useLessonFeedback(lessonId, true);
+  const saving = savingFeedback || canManage;
   const [hover, setHover] = useState<number | null>(null);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentCount, setCommentCount] = useState<number | null>(null);
+  const commentsId = useId();
+
+  useEffect(() => {
+    setCommentsOpen(false);
+    setCommentCount(null);
+  }, [lessonId]);
+
+  const shownCommentCount = commentCount ?? feedback?.commentCount ?? 0;
 
   const mineRating = feedback?.mine.rating ?? null;
   const shown = hover ?? mineRating ?? 0;
@@ -99,8 +113,33 @@ export function LessonFeedback({ lessonId }: LessonFeedbackProps) {
             <Text role="body-sm" tone="muted" as="span">
               {average}
             </Text>
+            <span className={styles.separator} aria-hidden="true">
+              |
+            </span>
+            <button
+              type="button"
+              className={`${styles.commentsToggle} ${commentsOpen ? styles.commentsToggleOpen : ''}`}
+              aria-expanded={commentsOpen}
+              aria-controls={commentsId}
+              onClick={() => setCommentsOpen((open) => !open)}
+            >
+              <Icon name="chat_bubble" size="sm" filled={commentsOpen} />
+              <Text role="label-lg" as="span">
+                Yorumlar ({shownCommentCount})
+              </Text>
+              <Icon name={commentsOpen ? 'expand_less' : 'expand_more'} size="sm" />
+            </button>
           </div>
         </div>
+      )}
+
+      {feedback && commentsOpen && (
+        <LessonComments
+          id={commentsId}
+          lessonId={lessonId}
+          canManage={canManage}
+          onCountChange={setCommentCount}
+        />
       )}
 
       {error && (
