@@ -1,0 +1,20 @@
+.intro {
+  margin: 0 0 var(--space-md);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-height: 55vh;
+  overflow-y: auto;
+  margin-bottom: var(--space-md);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}

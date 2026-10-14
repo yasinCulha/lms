@@ -3,6 +3,7 @@ import { Badge, Button, Card, Icon, Panel, ProgressBar, Text } from '../../compo
 import { PageContainer } from '../../layout/PageContainer';
 import { useCurrentUser } from '../../data/useCurrentUser';
 import { CourseInstructors } from './CourseInstructors';
+import { CourseSurveysPanel } from '../surveys/CourseSurveysPanel';
 import { useCourseDetail } from './useCourseDetail';
 import { CONTENT_TYPE_BADGE_TONES, CONTENT_TYPE_ICONS, CONTENT_TYPE_LABELS } from './contentType';
 import styles from './CourseDetailPage.module.css';
@@ -119,6 +120,8 @@ export function CourseDetailPage() {
               )}
             </Panel>
           )}
+
+          {canManage && <CourseSurveysPanel courseId={course.id} className={styles.gradesPanel} />}
 
           {!course.isEnrolled && !canManage && !userLoading && (
             <Card padding="lg" elevation="1" className={styles.lockedCard}>

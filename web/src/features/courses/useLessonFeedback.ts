@@ -33,7 +33,7 @@ function applyPatch(prev: LessonFeedback, patch: Patch): LessonFeedback {
     mine.rating = patch.rating;
   }
 
-  return { likeCount, ratingCount, ratingAverage, mine };
+  return { ...prev, likeCount, ratingCount, ratingAverage, mine };
 }
 
 export function useLessonFeedback(lessonId: string | undefined, enabled: boolean) {
